@@ -1,0 +1,42 @@
+services:
+  api:
+    build: .
+    container_name: schediora-api
+    env_file:
+      - .env
+    ports:
+      - '8000:8000'
+    depends_on:
+      - postgres
+      - redis
+
+  worker:
+    build: .
+    container_name: schediora-worker
+    env_file:
+      - .env
+    command: celery -A app.workers.celery_app.celery_app worker -l INFO
+    depends_on:
+      - redis
+      - postgres
+
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: schediora-postgres
+    environment:
+      POSTGRES_USER: schediora
+      POSTGRES_PASSWORD: schediora
+      POSTGRES_DB: schediora
+    ports:
+      - '5432:5432'
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    container_name: schediora-redis
+    ports:
+      - '6379:6379'
+
+volumes:
+  pgdata:
